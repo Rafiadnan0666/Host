@@ -46,7 +46,7 @@
             @foreach ($orders->groupBy('pesan_id') as $pesanId => $group)
                 @php $firstOrder = $group->first(); @endphp
     
-                @if (Auth::user()->id === $firstOrder->pesan_id)
+                @if (Auth::user()->id === $firstOrder->pesanan_id)
                     <div class="mb-3">
                         <h6 class="text-primary fw-bold mb-3">
                             <i class="bi bi-person-circle me-2"></i>For: {{ $firstOrder->pesan->name ?? 'Unknown User' }}

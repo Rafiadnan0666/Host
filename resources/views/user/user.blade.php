@@ -7,13 +7,14 @@
     }
 
     .hover-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
     }
 
     .img-container {
         overflow: hidden;
-        height: 220px;
+        height: 180px;
+        background-color: #f9f9f9;
     }
 
     .user-image {
@@ -24,25 +25,43 @@
     }
 
     .hover-card:hover .user-image {
-        transform: scale(1.1);
+        transform: scale(1.08);
     }
 </style>
-<div class="py-4">
-    <div class="row g-4">
+
+<div class=" py-4">
+    <!-- 🔍 Search & Filter -->
+    <div class="row g-2 mb-4">
+        <div class="col-md-5">
+            <input type="text" id="searchInput" class="form-control" placeholder="Search name or email...">
+        </div>
+        <div class="col-md-4">
+            <select id="locationFilter" class="form-select">
+                <option value="">All Locations</option>
+                @foreach($users->pluck('alamat')->unique()->filter()->values() as $location)
+                    <option value="{{ $location }}">{{ $location }}</option>
+                @endforeach
+            </select>
+        </div>
+    </div>
+
+    <!-- 👤 User Cards -->
+    <div class="row g-4" id="userGrid">
         @foreach ($users as $user)
-            <div class="col-6 col-md-4 col-lg-3">
+            <div class="col-6 col-md-4 col-lg-3 user-card"
+                 data-name="{{ strtolower($user->name) }}"
+                 data-email="{{ strtolower($user->email) }}"
+                 data-location="{{ strtolower($user->alamat ?? '') }}">
                 <a href="{{ route('user.detail', $user->id) }}" class="text-decoration-none text-dark">
-                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 hover-card position-relative">
+                    <div class="card border-0 shadow-sm rounded-4 hover-card h-100">
                         <div class="img-container">
-                            <img src="{{ asset('storage/' . $user->gambar) }}" 
-                                 class="card-img-top user-image" 
+                            <img src="{{ $user->gambar ? asset('storage/' . $user->gambar) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name) }}" 
+                                 class="user-image" 
                                  alt="{{ $user->name }}">
                         </div>
-                        <div class="card-body p-3 bg-white">
-                            <h5 class="card-title mb-1 text-truncate fw-semibold">{{ $user->name }}</h5>
-                            <p class="card-text text-muted small mb-0 text-truncate">
-                                {{ $user->alamat ?? 'Alamat tidak tersedia' }}
-                            </p>
+                        <div class="card-body bg-white p-3">
+                            <h5 class="fw-semibold mb-1">{{ $user->name }}</h5>
+                            <p class="text-muted small mb-0">{{ $user->alamat ?? 'Unknown location' }}</p>
                         </div>
                     </div>
                 </a>
@@ -50,6 +69,32 @@
         @endforeach
     </div>
 </div>
+
+<!-- 🔧 JS for Search & Filter -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInput = document.getElementById("searchInput");
+        const locationFilter = document.getElementById("locationFilter");
+        const cards = document.querySelectorAll(".user-card");
+
+        function filterUsers() {
+            const search = searchInput.value.toLowerCase();
+            const location = locationFilter.value.toLowerCase();
+
+            cards.forEach(card => {
+                const name = card.dataset.name;
+                const email = card.dataset.email;
+                const loc = card.dataset.location;
+
+                const matchesSearch = name.includes(search) || email.includes(search);
+                const matchesLocation = !location || loc === location;
+
+                card.style.display = (matchesSearch && matchesLocation) ? "block" : "none";
+            });
+        }
+
+        searchInput.addEventListener("input", filterUsers);
+        locationFilter.addEventListener("change", filterUsers);
+    });
+</script>
 @endsection
-
-

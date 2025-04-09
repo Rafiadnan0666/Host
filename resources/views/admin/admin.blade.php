@@ -54,19 +54,61 @@
 <div class="col-md-12">
     <div class="card">
         <div class="card-header">
-            <h4 class="card-title">User List</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <h4 class="card-title">User List</h4>
+                </div>
+                <div class="col-md-6">
+                    <div class="float-right">
+                        <form action="{{ route('admin') }}" method="GET">
+                            <div class="input-group">
+                                <input type="text" name="search" class="form-control" placeholder="Search..." value="{{ request('search') }}">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="submit">Search</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table id="multi-filter-select" class="display table table-striped table-hover">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Alamat</th>
-                            <th>No. Telp</th>
-                            <th>Role</th>
-                            <th>Created At</th>
+                            <th>Name 
+                                <a href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc']) }}">
+                                    <i class="fas fa-sort"></i>
+                                </a>
+                            </th>
+                            <th>Email
+                                <a href="{{ request()->fullUrlWithQuery(['sort' => 'email', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc']) }}">
+                                    <i class="fas fa-sort"></i>
+                                </a>
+                            </th>
+                            <th>Alamat
+                                <a href="{{ request()->fullUrlWithQuery(['sort' => 'alamat', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc']) }}">
+                                    <i class="fas fa-sort"></i>
+                                </a>
+                            </th>
+                            <th>No. Telp
+                                <a href="{{ request()->fullUrlWithQuery(['sort' => 'no_telp', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc']) }}">
+                                    <i class="fas fa-sort"></i>
+                                </a>
+                            </th>
+                            <th>Role
+                                <select class="form-control form-control-sm" onchange="window.location.href = this.value">
+                                    <option value="{{ request()->fullUrlWithQuery(['role' => '']) }}">All Roles</option>
+                                    <option value="{{ request()->fullUrlWithQuery(['role' => 'admin']) }}" {{ request('role') == 'admin' ? 'selected' : '' }}>ADMIN</option>
+                                    <option value="{{ request()->fullUrlWithQuery(['role' => 'user']) }}" {{ request('role') == 'user' ? 'selected' : '' }}>USER</option>
+                                </select>
+                            </th>
+                            <th>Created At
+                                <a href="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc']) }}">
+                                    <i class="fas fa-sort"></i>
+                                </a>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -82,6 +124,9 @@
                         @endforeach
                     </tbody>
                 </table>
+                <div class="mt-3">
+                    {{-- {{ $user->appends(request()->query())->links() }} --}}
+                </div>
             </div>
         </div>
     </div>
