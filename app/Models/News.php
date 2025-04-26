@@ -12,5 +12,11 @@ class News extends Model
     protected $fillable = [
         'title', 'content', 'image', 'approve', 'user_id', 'category'
     ];
-    
+    // App\Models\News.php
+
+public function kategori()
+{
+    return $this->belongsTo(\App\Models\Kategori::class, 'category');
+}
+
 }
