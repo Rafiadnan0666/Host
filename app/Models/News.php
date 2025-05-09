@@ -10,13 +10,21 @@ class News extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title', 'content', 'image', 'approve', 'user_id', 'category'
+        'title', 
+        'content', 
+        'image', 
+        'approve', 
+        'user_id', 
+        'category_id'
     ];
-    // App\Models\News.php
 
-public function kategori()
-{
-    return $this->belongsTo(\App\Models\Kategori::class, 'category');
-}
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
+    public function kategori()
+    {
+        return $this->belongsTo(Kategori::class, 'category_id');
+    }
 }

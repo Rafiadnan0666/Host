@@ -1,73 +1,212 @@
-@extends('dash')
+@extends('layout.dash')
 
 @section('konten')
-<div class="max-w-7xl mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-800">Daftar Berita</h1>
-        <a href="{{ route('news.create') }}"
-           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
-            + Tambah Berita
-        </a>
-    </div>
+<div class="container py-4">
+    <h1 class="mb-4">News Management</h1>
 
-    {{-- Search bar --}}
-    <form method="GET" class="mb-6">
-        <input type="text" name="search" placeholder="Cari judul atau isi berita..."
-               value="{{ request('search') }}"
-               class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring focus:border-blue-300">
-    </form>
+    <!-- Search Bar -->
+    <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search news...">
 
-    {{-- Table --}}
-    <div class="overflow-x-auto">
-        <table class="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <thead class="bg-gray-100 text-gray-700 text-left text-sm uppercase">
+    <!-- Create News Button -->
+    <button class="btn btn-primary mb-3" id="createNewsBtn">Create News</button>
+
+    <!-- News Table -->
+    <div class="table-responsive">
+        <table class="table table-bordered" id="newsTable">
+            <thead>
                 <tr>
-                    <th class="px-6 py-3 border-b">Judul</th>
-                    <th class="px-6 py-3 border-b">Kategori</th>
-                    <th class="px-6 py-3 border-b">Status</th>
-                    <th class="px-6 py-3 border-b">Aksi</th>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Approve</th>
+                    <th>Image</th>
+                    <th>Action</th>
                 </tr>
             </thead>
-            <tbody class="text-gray-800">
-                @forelse($news as $item)
-                <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 border-b">{{ $item->title }}</td>
-                    <td class="px-6 py-4 border-b">{{ $item->kategori->nama ?? '-' }}</td>
-                    <td class="px-6 py-4 border-b">
-                        <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full 
-                            {{ $item->approve === 'y' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
-                            {{ $item->approve === 'y' ? 'Disetujui' : 'Menunggu' }}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 border-b">
-                        <div class="flex items-center gap-2">
-                            <a href="{{ route('news.edit', $item->id) }}"
-                               class="text-blue-500 hover:text-blue-700 text-sm font-medium">
-                                Edit
-                            </a>
-                            <form action="{{ route('news.destroy', $item->id) }}" method="POST"
-                                  onsubmit="return confirm('Yakin ingin menghapus berita ini?')">
-                                @csrf @method('DELETE')
-                                <button type="submit"
-                                        class="text-red-500 hover:text-red-700 text-sm font-medium">
-                                    Hapus
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                @empty
+            <tbody>
+                @foreach($news as $item)
                 <tr>
-                    <td colspan="4" class="px-6 py-4 text-center text-gray-500">Tidak ada berita ditemukan.</td>
+                    <td>{{ $item->title }}</td>
+                    <td>{{ $item->kategori->name ?? '-' }}</td>
+                    <td>{{ $item->approve == 'y' ? 'Approved' : 'Not Approved' }}</td>
+                    <td>
+                        @if($item->image)
+                            <img src="{{ asset('storage/'.$item->image) }}" width="80">
+                        @else
+                            No Image
+                        @endif
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-warning editBtn" data-id="{{ $item->id }}">Edit</button>
+                        <button class="btn btn-sm btn-danger deleteBtn" data-id="{{ $item->id }}">Delete</button>
+                    </td>
                 </tr>
-                @endforelse
+                @endforeach
             </tbody>
         </table>
-    </div>
 
-    {{-- Pagination --}}
-    <div class="mt-6">
-        {{ $news->withQueryString()->links('pagination::tailwind') }}
+        {{ $news->links() }}
     </div>
 </div>
+
+<!-- Modal Create/Edit -->
+<div class="modal fade" id="newsModal" tabindex="-1" aria-labelledby="newsModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="newsForm" enctype="multipart/form-data">
+      @csrf
+      <input type="hidden" name="id" id="newsId">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="newsModalLabel">Create News</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+              <label>Title</label>
+              <input type="text" class="form-control" name="title" id="title">
+          </div>
+
+          <div class="mb-3">
+              <label>Content</label>
+              <textarea class="form-control" name="content" id="content" rows="3"></textarea>
+          </div>
+
+          <div class="mb-3">
+              <label>Approve</label>
+              <select class="form-control" name="approve" id="approve">
+                  <option value="y">Yes</option>
+                  <option value="n">No</option>
+              </select>
+          </div>
+
+          <div class="mb-3">
+              <label>Category</label>
+              <select class="form-control" name="category_id" id="category_id">
+                  @foreach($categories as $category)
+                      <option class="text-color-black" value="{{ $category->id }}">{{ $category->name }}</option>
+                  @endforeach
+              </select>
+          </div>
+
+          <div class="mb-3">
+              <label>Image</label>
+              <input type="file" class="form-control" id="imageInput" name="image_file">
+              <img id="previewImage" src="#" class="img-fluid mt-2 d-none" width="120">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary" id="saveBtn">Save</button>
+        </div>
+      </div>
+    </form>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Search Bar
+        document.getElementById('searchInput').addEventListener('input', function() {
+            let value = this.value.toLowerCase();
+            document.querySelectorAll('#newsTable tbody tr').forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(value) ? '' : 'none';
+            });
+        });
+    
+        // Image Preview
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            let file = e.target.files[0];
+            if (file) {
+                let reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('previewImage').src = event.target.result;
+                    document.getElementById('previewImage').classList.remove('d-none');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    
+        // Open Create Modal
+        document.getElementById('createNewsBtn').addEventListener('click', function() {
+            resetForm();
+            document.getElementById('newsModalLabel').textContent = "Create News";
+            new bootstrap.Modal(document.getElementById('newsModal')).show();
+        });
+    
+        // Open Edit Modal
+        document.querySelectorAll('.editBtn').forEach(button => {
+            button.addEventListener('click', function() {
+                let id = this.dataset.id;
+                fetch('/news/' + id + '/edit')
+                    .then(response => response.json())
+                    .then(data => {
+                        resetForm();
+                        document.getElementById('newsModalLabel').textContent = "Edit News";
+                        document.getElementById('newsId').value = data.news.id;
+                        document.getElementById('title').value = data.news.title;
+                        document.getElementById('content').value = data.news.content;
+                        document.getElementById('approve').value = data.news.approve;
+                        document.getElementById('category_id').value = data.news.category_id;
+                        if (data.news.image) {
+                            document.getElementById('previewImage').src = '/storage/' + data.news.image;
+                            document.getElementById('previewImage').classList.remove('d-none');
+                        }
+                        new bootstrap.Modal(document.getElementById('newsModal')).show();
+                    });
+            });
+        });
+    
+        // Save Create or Update
+        document.getElementById('newsForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            let formData = new FormData(this);
+    
+            let id = document.getElementById('newsId').value;
+            let url = id ? '/news/update/' + id : '/news';
+            let method = 'POST'; // Always POST
+    
+            fetch(url, {
+                method: method,
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                location.reload();
+            })
+            .catch(error => console.error(error));
+        });
+    
+        // Delete News
+        document.querySelectorAll('.deleteBtn').forEach(button => {
+            button.addEventListener('click', function() {
+                if (confirm('Are you sure you want to delete this news?')) {
+                    let id = this.dataset.id;
+                    fetch('/news/' + id, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        location.reload();
+                    })
+                    .catch(error => console.error(error));
+                }
+            });
+        });
+    
+        // Reset Modal Form
+        function resetForm() {
+            document.getElementById('newsForm').reset();
+            document.getElementById('newsId').value = '';
+            document.getElementById('previewImage').classList.add('d-none');
+        }
+    });
+    </script>
+</div>
+
+
+
 @endsection

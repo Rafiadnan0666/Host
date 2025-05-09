@@ -6,26 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('news', function (Blueprint $table) {
             $table->id();
             $table->string('title');
             $table->text('content');
-            $table->string('image');
-            $table->enum('approve', ['y', 'n']);
-            $table->foreignId("user_id")->references("id")->on("users");
-            $table->foreignId("category")->references("id")->on("kategoris");
+            $table->string('image')->nullable();
+            $table->enum('approve', ['y', 'n'])->default('n');
+            $table->foreignId('user_id')->constrained();
+            $table->foreignId('category_id')->constrained('kategoris');
             $table->timestamps();
+            $table->string('slug')->unique();
+
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('news');

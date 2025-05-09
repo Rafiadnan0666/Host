@@ -140,6 +140,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/chat/messages/{userId}', [ChatController::class, 'fetchMessages'])->name('chat.messages');
 });
 
+
 Route::get('/host', function (Request $request) {
     $user = auth()->user();
 
@@ -166,6 +167,24 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+
+
+
+use App\Http\Controllers\NewsController;
+
+Route::get('/news', [NewsController::class, 'index'])->name('news.index');
+Route::post('/news', [NewsController::class, 'store'])->name('news.store');
+Route::get('/news/{news}/edit', [NewsController::class, 'edit'])->name('news.edit');
+Route::post('/news/update/{id}', [NewsController::class, 'postUpdate'])->name('news.postUpdate');
+Route::delete('/news/{news}', [NewsController::class, 'destroy'])->name('news.destroy');
+
+// Public side (read news by slug)
+Route::get('/news/{slug}', [NewsController::class, 'show'])->name('news.show');
+
+
+
+
 
 require __DIR__.'/auth.php';
 

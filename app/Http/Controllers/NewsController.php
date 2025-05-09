@@ -10,36 +10,17 @@ use App\Models\Kategori;
 class NewsController extends Controller
 {
     // Display a listing of the resource
-    public function index(Request $request)
+    public function index() 
     {
-        $query = News::query();
-
-        // Apply search filter
-        if ($request->has('search')) {
-            $search = $request->input('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', '%' . $search . '%')
-                  ->orWhere('content', 'like', '%' . $search . '%');
-            });
-        }
-
-        // Limit access for non-admin users
-        if (Auth::user()->role !== 'admin') {
-            $query->where('user_id', Auth::id());
-        }
-
-        // Pagination and eager loading
-        $news = $query->with('kategori')->latest()->paginate(10);
-
-        return view('news.news', compact('news'));
+        $news = News::with(['kategori', 'user'])->paginate(10);
+        $categories = Kategori::all();
+        return view('news.news', compact('news', 'categories'));
     }
 
-    // Show the form for creating a new resource
+    // Show the form for creating a new resource (not used because we use modal)
     public function create()
     {
-        // Load categories for selection
-        $categories = Kategori::all();
-        return view('news.create', compact('categories')); 
+        //
     }
 
     // Store a newly created resource in storage
@@ -48,52 +29,74 @@ class NewsController extends Controller
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'image' => 'nullable|string|max:255',
             'approve' => 'required|in:y,n',
-            'user_id' => 'required|exists:users,id',
-            'category' => 'required|exists:kategoris,id',
+            'category_id' => 'required|exists:kategoris,id',
         ]);
 
-        News::create($validatedData);
+        // Handle file upload
+        if ($request->hasFile('image_file')) {
+            $file = $request->file('image_file');
+            $path = $file->store('uploads/news', 'public');
+            $validatedData['image'] = $path;
+        }
 
-        return redirect()->route('news.index')->with('success', 'News created successfully.');
+        // Assign authenticated user
+        $validatedData['user_id'] = Auth::id();
+
+        // Create news
+        $news = News::create($validatedData);
+
+        return response()->json(['status' => 'success', 'message' => 'News created successfully.', 'data' => $news]);
     }
 
-    // Display the specified resource
+    // Display the specified resource (not used because we use modal)
     public function show(News $news)
     {
-        return view('news.show', compact('news'));
+        //
     }
 
-    // Show the form for editing the specified resource
+    // Show the form for editing the specified resource (AJAX)
     public function edit(News $news)
     {
         $categories = Kategori::all();
-        return view('news.edit', compact('news', 'categories'));
+        return response()->json([
+            'categories' => $categories,
+            'news' => $news
+        ]);
     }
 
-    // Update the specified resource in storage
-    public function update(Request $request, News $news)
+    // POST to update (not using PUT)
+    public function postUpdate(Request $request, $id)
     {
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'image' => 'nullable|string|max:255',
             'approve' => 'required|in:y,n',
-            'user_id' => 'required|exists:users,id',
-            'category' => 'required|exists:kategoris,id',
+            'category_id' => 'required|exists:kategoris,id',
         ]);
+
+        $news = News::findOrFail($id);
+
+        // Handle file upload
+        if ($request->hasFile('image_file')) {
+            $file = $request->file('image_file');
+            $path = $file->store('uploads/news', 'public');
+            $validatedData['image'] = $path;
+        }
 
         $news->update($validatedData);
 
-        return redirect()->route('news.index')->with('success', 'News updated successfully.');
+        return response()->json(['status' => 'success', 'message' => 'News updated successfully.', 'data' => $news]);
     }
 
     // Remove the specified resource from storage
     public function destroy(News $news)
     {
-        $news->delete();
+        if ($news) {
+            $news->delete();
+            return response()->json(['status' => 'success', 'message' => 'News deleted successfully.']);
+        }
 
-        return redirect()->route('news.index')->with('success', 'News deleted successfully.');
+        return response()->json(['status' => 'error', 'message' => 'News not found.']);
     }
 }
